@@ -267,6 +267,30 @@ pub fn load_samples_from_file(bytes: &[u8]) -> Result<Vec<f32>, &'static str> {
         )
         .map_err(|_| "Failed to probe format")?;
 
+    eprintln!("Found {} tracks", probe.format.tracks().len());
+    eprintln!(
+        "Format: {:?}",
+        probe
+            .format
+            .default_track()
+            .expect("Failed to get default track")
+    );
+    eprintln!(
+        "Using {} channels",
+        probe.format.tracks()[0].codec_params.channels.unwrap()
+    );
+    eprintln!(
+        "Using {} sample rate",
+        probe.format.tracks()[0].codec_params.sample_rate.unwrap()
+    );
+    eprintln!(
+        "Using {} bit depth",
+        probe.format.tracks()[0]
+            .codec_params
+            .bits_per_sample
+            .unwrap()
+    );
+
     // Extract track info and parameters before we start decoding
     let track = probe.format.default_track().ok_or("No default track")?;
     let codec_params = track.codec_params.clone();
@@ -277,38 +301,40 @@ pub fn load_samples_from_file(bytes: &[u8]) -> Result<Vec<f32>, &'static str> {
         .map_err(|_| "Failed to create decoder")?;
 
     let mut samples = Vec::new();
-    let mut sample_buf = Vec::new();
 
-    let mut format = probe.format;
-    while let Ok(packet) = format.next_packet() {
-        let decoded = decoder.decode(&packet).map_err(|_| "Failed to decode")?;
-        let spec = *decoded.spec();
+    Ok(samples)
 
-        if sample_buf.capacity() < decoded.capacity() {
-            sample_buf.resize(decoded.capacity(), 0.0);
-        }
+    // let mut sample_buf = Vec::new();
+    // let mut format = probe.format;
+    // while let Ok(packet) = format.next_packet() {
+    //     let decoded = decoder.decode(&packet).map_err(|_| "Failed to decode")?;
+    //     let spec = *decoded.spec();
 
-        let mut sample_buffer = SampleBuffer::new(decoded.capacity() as u64, spec);
-        sample_buffer.copy_interleaved_ref(decoded);
-        samples.extend_from_slice(sample_buffer.samples());
-    }
+    //     if sample_buf.capacity() < decoded.capacity() {
+    //         sample_buf.resize(decoded.capacity(), 0.0);
+    //     }
 
-    // Convert to stereo if mono
-    let sample_rate = codec_params.sample_rate.unwrap();
-    let frames: Result<Vec<f32>, _> = if channels.count() == 1 {
-        let mut new_length = ((44100 as f32 / sample_rate as f32) * samples.len() as f32) as usize;
-        new_length -= new_length % 2;
+    //     let mut sample_buffer = SampleBuffer::new(decoded.capacity() as u64, spec);
+    //     sample_buffer.copy_interleaved_ref(decoded);
+    //     samples.extend_from_slice(sample_buffer.samples());
+    // }
 
-        let mut resampled: Vec<f32> = vec![0.0; new_length];
-        for (n, sample) in resampled.chunks_exact_mut(2).enumerate() {
-            let ix = 2 * ((n as f32 / new_length as f32) * samples.len() as f32) as usize;
-            sample[0] = samples[ix];
-            sample[1] = samples[ix + 1];
-        }
-        Ok(resampled)
-    } else {
-        Ok(samples)
-    };
+    // // Convert to stereo if mono
+    // let sample_rate = codec_params.sample_rate.unwrap();
+    // let frames: Result<Vec<f32>, _> = if channels.count() == 1 {
+    //     let mut new_length = ((44100 as f32 / sample_rate as f32) * samples.len() as f32) as usize;
+    //     new_length -= new_length % 2;
 
-    frames
+    //     let mut resampled: Vec<f32> = vec![0.0; new_length];
+    //     for (n, sample) in resampled.chunks_exact_mut(2).enumerate() {
+    //         let ix = 2 * ((n as f32 / new_length as f32) * samples.len() as f32) as usize;
+    //         sample[0] = samples[ix];
+    //         sample[1] = samples[ix + 1];
+    //     }
+    //     Ok(resampled)
+    // } else {
+    //     Ok(samples)
+    // };
+
+    // frames
 }
