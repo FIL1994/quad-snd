@@ -269,13 +269,6 @@ pub fn load_samples_from_file(bytes: &[u8]) -> Result<Vec<f32>, &'static str> {
 
     eprintln!("Found {} tracks", probe.format.tracks().len());
     eprintln!(
-        "Format: {:?}",
-        probe
-            .format
-            .default_track()
-            .expect("Failed to get default track")
-    );
-    eprintln!(
         "Using {} channels",
         probe.format.tracks()[0].codec_params.channels.unwrap()
     );
@@ -283,16 +276,9 @@ pub fn load_samples_from_file(bytes: &[u8]) -> Result<Vec<f32>, &'static str> {
         "Using {} sample rate",
         probe.format.tracks()[0].codec_params.sample_rate.unwrap()
     );
-    eprintln!(
-        "Using {} bit depth",
-        probe.format.tracks()[0]
-            .codec_params
-            .bits_per_sample
-            .unwrap()
-    );
 
     // Extract track info and parameters before we start decoding
-    let track = probe.format.default_track().ok_or("No default track")?;
+    let track = &probe.format.tracks()[0];
     let codec_params = track.codec_params.clone();
     let channels = codec_params.channels.unwrap();
 
