@@ -256,7 +256,7 @@ pub fn load_samples_from_file(bytes: &[u8]) -> Result<Vec<f32>, &'static str> {
     let mss = MediaSourceStream::new(Box::new(cursor), Default::default());
 
     let mut hint = Hint::new();
-    hint.with_extension("mp3");
+    // hint.with_extension("mp3");
 
     let mut probe = get_probe()
         .format(
