@@ -283,7 +283,7 @@ pub fn load_samples_from_file(bytes: &[u8]) -> Result<Vec<f32>, &'static str> {
     let channels = codec_params.channels.unwrap();
 
     let mut decoder = get_codecs()
-        .make(&codec_params, &DecoderOptions::default())
+        .make(&codec_params, &DecoderOptions { verify: true })
         .map_err(|_| "Failed to create decoder")?;
 
     let mut samples = Vec::new();
